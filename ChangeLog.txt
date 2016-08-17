@@ -1,0 +1,82 @@
+ChangeLog for SOLID 3.5.8 24/04/2015
+		  	  		  * Added CMake configuration
+                      * Fixed compilation and warnings fro gcc 4.8.3 (Thanks Sven Köhler)
+
+ChangeLog for SOLID 3.5.7 18/06/2013
+                      * Fixed crash on calling DT_GetPenDepth, DT_GetClosestPiar, 
+					    and DT_GetCommonPoint with first object a convex and second
+						object a complex. Thanks Robin Tomcin.
+
+                      * Fixed segmentation fault in qhull under gcc 4.1.x - 4.3.x. 
+					    Thanks Florian Kamm for the build fix.                  
+
+ChangeLog for SOLID 3.5.6 06/05/2007
+                      * Fixed bug in creation of Dobkin-Kirkpatrick hierarchy. Thanks Markus Rickert.
+
+ChangeLog for SOLID 3.5.5 02/10/2006
+                      * Fixed build for g++ 4.1.
+
+                      * Fixed automake files for building from configuration
+                        directories other than the top dir.
+
+ChangeLog for SOLID 3.5.4 29/08/2005
+                      * Fixed consistency problem with Euler angles.
+
+                      * Changed DT_Index and DT_Count from unsigned short
+                        to unsigned int. This will allow complexes to
+                        be created that have more than 65536
+                        triangles. The maximum now is 4 billion. Note 
+                        that this change increases the memory
+                        footprint of complex shapes, so if memory is
+                        an issue you might want to change it back.
+
+                      * Fixed refitting of complex shapes. Bounding
+                        boxes of complex shapes were not updated after
+                        refitting unless the object also received an
+                        updated placement.
+
+ChangeLog for SOLID 3.5.3 09/02/2005
+                      * Changed a rounding-dependent assertion into an early 
+					    out in penetration_depth.
+					
+					  * Fixed hybrid_penetration_depth call in
+                        DT_Complex.cpp. Thanks Speedy! 
+
+ChangeLog for SOLID 3.5.2 17/08/2004
+
+                      * Fixed source for compilation under gcc 3.4. 
+                        Thanks Kester Maddock and Tobias Kieslich
+                        for suggesting fixes. 
+
+DT_Complex.cpp        * Fixed memory leak                     
+
+DT_GJK.h              * Vertix-in-simplex check now uses a tolerance
+                        for improved robustness. 
+
+DT_PenDepth.cpp       * Major reimplementation of polytope data structure in
+                        the Expanding Polytope Algorithm for better
+                        robustness and performance. Thanks Piere
+                        Terdiman of Novodex for bringing this issue to
+                        my attention. 
+
+DT_Scene.h            * Added a "testing" flag to signal objects being
+                        moved while testing. 
+
+
+ 
+
+ChangeLog for SOLID 3.5.1 28/12/2003
+
+BP_ProxyList.h:       * Wrong use of STL std::vector<>(size_t n)
+                        constructor. Should reserve rather than add.  
+DT_GJK.h:             * Unrolled loops in DT_GJK::compute_det() for
+                        better performance.
+DT_PenDepth.cpp:      * Reduced max number of iterations by an order of
+                        magnitude.
+MT_ScalarTracer.h:    * This file was missing in the CDROM distribution.
+configure.ac:         * Disabled the DEBUG flag for debug builds.
+                      * Optimization bug in gcc 3.3.1 causes a SEGV in
+                        addFacet. Fixed by setting '-O2 -fno-gcse' flags.
+ 
+
+

@@ -1,0 +1,1160 @@
+\input texinfo  @c -*-texinfo-*-
+
+@include version.texi
+
+@settitle User's Guide to the SOLID Collision Detection Library
+@setfilename solid3.info
+
+@ifinfo
+@format
+START-INFO-DIR-ENTRY
+* SOLID: (solid3).      Software Library for Interference Detection.
+END-INFO-DIR-ENTRY
+@end format
+@end ifinfo
+
+@ifinfo
+This file documents the features and implementation of SOLID.
+@end ifinfo
+
+Copyright (c) 2001-2003  DTECTA
+
+@iftex
+@finalout
+@c @smallbook
+@c @cropmarks
+@end iftex
+
+@setchapternewpage odd
+
+@titlepage
+@title User's Guide
+@title to the SOLID Collision Detection Library
+@sp 3
+@subtitle last updated @value{UPDATED}
+@subtitle for version @value{VERSION}
+@author Gino van den Bergen
+@page
+@vskip 0pt plus 1filll
+
+SOLID 3 uses Qhull from The Geometry Center of the University of Minnesota.
+Qhull is copyrighted as noted below.  Qhull is free software and may be
+obtained via anonymous ftp from geom.umn.edu.   
+@example
+        
+                    Qhull, Copyright (c) 1993-2002
+
+       The National Science and Technology Research Center for
+        Computation and Visualization of Geometric Structures
+                        (The Geometry Center)
+                       University of Minnesota
+                            400 Lind Hall
+                        207 Church Street S.E.
+                      Minneapolis, MN 55455  USA
+
+                       email: qhull@@geom.umn.edu
+
+
+
+@end example
+
+OpenGL (R) is a trademark of Silicon Graphics, Inc.
+
+Visual C++ (R) is a trademark of Microsoft Corporation.
+
+@end titlepage
+
+@ifinfo
+@node Top, License, , (DIR)
+
+This manual documents how to install and use SOLID.
+
+@end ifinfo
+@menu
+* License::         Says how you can copy and share SOLID.
+* Introduction::    What is it?                     
+* Installation::    How to configure, compile and install SOLID.
+* Usage::           How the API is set up.
+* Projects::	    Things still left to do.
+* Bugs::            Where to send bugs reports and questions.
+@end menu
+
+@node License, Introduction, Top, Top
+@chapter License
+
+This open-source edition of SOLID version 3 is released under the terms 
+of either the GNU General Public License (GPL) or the Q Public License (QPL).
+This means that for software created with SOLID version 3 you
+must comply with the terms of either one of these licenses. 
+@iftex
+See appendices for a complete list of terms and conditions of these licenses
+@end iftex
+ 
+@menu
+* GPL::    The GNU General Public License
+* QPL::    The Q Public License                     
+@end menu
+
+For enquiries about commercial use of SOLID, please contact info@@dtecta.com.   
+
+@node Introduction, Installation, License, Top
+@chapter Introduction
+
+SOLID is a software library containing functions for performing
+intersection tests and proximity queries that are useful in the context
+of collision detection. Collision detection is the process of detecting
+pairs of geometric objects that are intersecting or are within a given
+proximity of each other. In particular, SOLID is useful for detecting
+collisions between objects that are moving relatively of each other over
+time. The motions of objects are controlled by the client application,
+and are not determined or affected by SOLID. 
+
+Furthermore, SOLID provides functionality for determining geometric data
+pertaining to a pair of objects that is used by the client application
+for computing the appropriate response to a collision. This data,
+referred to as response data, is passed to the client application by
+means of a callback mechanism or by direct queries from the client
+application. 
+
+@section Overview
+
+SOLID's functionality is subdivided into the following categories:
+
+@enumerate
+
+@item Shape definition
+@item Object placement and motion 
+@item Scene management
+@item Response definition
+@item Global actions
+@item Broad phase
+
+@end enumerate
+
+@subsection Shape Definition
+
+The shape of a geometric object is defined relative to its local
+coordinate system. A shape can be a simple geometric primitive, e.g., a
+sphere or a line segment, or a complex shape composed of multiple
+primitives. Shapes defined in terms of vertex positions, e.g., a
+triangle mesh, may use vertex data that is stored in memory maintained
+by the client application. 
+
+@subsection Object Placement and Motion
+
+A geometric object is defined by a shape, an affine transformation, and
+a margin. The shape is placed in the world coordinate system by
+specifying the object's local coordinate system represented by an affine
+transformation. 
+The actual object is the set of points in world coordinates whose distance to
+the shape  is at most the margin. Motion of an object can be defined by 
+changing the placement of the local coordinate system, the margin, or the
+positions of the vertices of the shape.  
+
+
+@subsection Scene Management
+
+Collections of objects on which collision detection has to be performed
+are placed in a scene. SOLID is capable of maintaining multiple
+scenes. Objects can be shared by multiple scenes. A scene maintains
+cached data pertaining to the objects in the scene in order to speed-up
+consecutive collision queries that are performed on the scene. 
+
+@subsection Response Definition
+
+In SOLID, collision response is handled by callback functions.
+The types of response and the callback functions that needs to be executed
+for each pair of intersecting objects is stored in a response
+table. Currently, there are three types of response: 
+@enumerate
+ 
+@item Simple response: no response data is returned.
+@item Witnessed response: a common point of the intersecting objects is
+returned. 
+@item Depth response: the penetration depth of the intersecting objects
+is returned. The penetration depth is the shortest vector over which one
+of the objects needs to be translated in order to bring the objects into
+touching contact. 
+  
+@end enumerate
+Response tables can be shared by multiple scenes, and per scene multiple
+response tables can be used. To each object that is considered for
+collision detection in a response table, a response class is
+assigned. Responses can be defined per pair of response classes, on all
+pairs containing a specific response class, or as a default for all
+pairs of response classes. 
+On a pair of response classes multiple responses can be defined. 
+During the lifetime of an object, it is possible to
+reassign the response class associated with the object per response
+table. 
+
+  
+@subsection Global Actions
+
+The main functionality of SOLID is to perform collision tests. Given a
+scene and a response table, a collision test computes for all pairs of
+colliding objects on which a response is defined the required response data and
+passes these data together with the colliding pair to the callback. The
+response actions are defined by the client 
+application in the callback and fall outside the scope of SOLID. 
+
+The client application may also obtain response data for a given object or
+pair of objects by direct queries. These direct queries are useful for static
+interference checks or for tracking the closest points of a pair of objects.
+
+@subsection Broad Phase
+
+The broad phase detects changes in the overlap status of pairs of
+axis-aligned boxes. The overlap status of a pair of boxes changes
+whenever the boxes start or cease to overlap. The boxes are organized in
+scenes similar to the scenes for objects. For each pair of boxes in a
+scene whose overlap status is changed a callback is called. The client
+defines a callback for pairs that start to overlap and one for pairs
+that cease to overlap. The broad phase is actually a sub-layer of the
+SOLID library, however the API can be directly accessed by the client
+application.   
+
+
+
+@section Software Package
+
+Currently, the SOLID package consists of three separate layers: 
+@enumerate
+
+@item MT: The Mathematics Toolkit. This is a set of C++ classes containing
+abstract data types for scalars, vectors, points, quaternions, matrices,
+coordinate systems, and bounding boxes. Global names in this layer are
+prefixed with "MT_".  
+
+@item The broad phase: A set of C++ classes wrapped by a C API. The broad
+phase detects changes in the overlap status of pairs of axis-aligned
+boxes (pairs of boxes that start or cease to overlap). Global names in this
+layer are prefixed with "BP_". 
+
+@item The narrow phase: A set of C++ classes wrapped by a C API. The narrow
+phase performs exact collision tests for pairs of objects, and computes
+response data for the colliding pairs of objects. Global names in this layer
+are prefixed with "DT_".  
+
+@end enumerate
+
+@section New Features of SOLID version 3
+
+Since the previous version 2.0 of SOLID, which was released in June 1998
+under the terms of the GNU Library General Public License by the
+Department of Mathematics & Computing Science of Eindhoven University of
+Technology, SOLID has evolved and matured considerably. New
+features as well as improvements for robustness and performance have
+been added. The most important changes in SOLID 3 are: 
+@itemize @bullet
+
+@item Use of single-precision floating-point numbers. The use of a
+32-bit floating-point format is a requirement for games and other
+interactive applications that run on current PC graphics hardware and
+consoles.   
+
+@item Penetration depth computation as a new response type. The
+penetration depth of a pair of intersecting objects is the shortest
+vector over which one of the objects needs to be translated in order to
+bring the objects in touching contact. The penetration depth can be used
+as an approximation of the contact point and contact plane, which are
+necessary for physics-based simulation. The depth response replaces the
+smart response in SOLID 2.0. Smart response uses the configuration of
+the previous time frame for finding the contact points and plane, which
+could give bad results when objects were interpenetrating over a number
+of frames. 
+
+@item SOLID 3 maintains multiple scenes. This feature is useful when
+collision detection is required for multiple tasks. For instance, it is
+possible to maintain at the same time a sound scene, a scene used for
+visibility culling, and a scene for physics simulations, without the
+objects in different scenes interfering with each other. 
+
+@item Stridden vertex arrays can be used for defining complex shapes. 
+
+@item Objects can be expanded spherically, i.e., a margin that defines
+the radius of the sphere that is 'added' can be set for each object. The
+object is the set of points whose distance to the shape is at most the
+margin. Margins are useful for creating objects with rounded edges, or
+'sensitive' areas around an object.        
+
+@item Functions for direct computation of response data have been added
+to the API. This is useful, since it allows the client to
+check overlap status, distance, etc., without having to perform a global
+collision test. 
+
+@item A ray cast has been added to SOLID. The ray cast returns the
+object in a scene that the ray hits first. Also, the hit spot and
+surface normal to this object are returned. 
+
+@item Response callbacks are defined in a response table independent of
+a scene. 
+
+@item Response callbacks are defined per pair of response classes rather
+than per object pair. With each object for which a response is defined
+in a response table, a response class is associated. The response class
+of an object may change over time. 
+
+@item It is now possible to define multiple response callbacks per
+object pair.  This is useful for performing several actions for a single
+collision (play sound, apply impulse, update statistics). 
+
+
+@end itemize          
+
+@node Installation, Usage, Introduction, Top
+@chapter Installing the SOLID SDK
+
+@section Requirements
+
+The SOLID library (libsolid) and the broad-phase library (libbroad) have a
+standard C API and can be linked to both C and C++ 
+applications.  
+Note that libsolid and libbroad are internally coded in C++ and
+thus need the libstdc++ library on Unix platforms (link using g++ rather
+than gcc).
+The mathematics toolkit (MT) is coded in standard C++ and uses templates
+extensively. The source code compiles under GNU g++ version 2.95 and higher
+and Microsoft Visual C++ version 6.0 SP4 and higher.
+ 
+
+
+
+
+@section Installation
+
+All header files that export types and functions are stored in the
+@samp{include} directory. 
+Source files are stored in the @samp{src} directory.
+On a Unix-like operating system, a @samp{configure} script generated by the
+GNU build tools (automake, autoconf, libtool) is used for creating the
+Makefiles. 
+Simply type @samp{./configure} followed by @samp{make} in the root of the
+SOLID distribution directory to build the SOLID lib and example programs.
+Typing @samp{make install} installs the SOLID library header files and
+binaries as well as this documentation in @samp{/usr/local}. 
+Note that you usually must have root privileges for adding items to
+@samp{/usr/local}.
+See @samp{./configure --help} for installing the library in a different
+location.
+
+The SOLID library can be built under Microsoft Visual C++ 6.0 and higher using
+the workspace (.dsw) and project (.dsp) files found in the @samp{VisualC6} 
+directory.  
+For use with Visual C++ 7.0 and higher, the workspace and project files must
+first be converted to the newer solution (.sln) and project (.vcproj) formats. 
+On a Win32 platform, the simplest way to make the
+SOLID SDK accessible in your applications is to add the SOLID
+@samp{include} and @samp{lib} directories to respectively the include and link
+path used by the compiler. 
+For running executables built using SOLID, the @samp{solid.dll} should be
+contained in the executable search path.  
+This is achieved most easily by copying these DLLs either to the directory
+containing the executable or to the @samp{WINxxxx/system32} directory.
+
+SOLID uses the Qhull library for computing convex hulls of sets of points. 
+In case the Qhull library is not available for your platform, SOLID can still
+be built. However, in that case, queries on convex hulls built with
+@code{DT_NewPolytope} (see below) fall back to brute force algorithms, 
+and are therefore much slower.
+In order to build a SOLID library without Qhull, make sure that the
+preprocessing flag @samp{-DQHULL} is not set.
+
+The core of SOLID may use either single or double precision floating-point
+arithmetic.
+The default option is single-precision.
+In order to build a double-precision SOLID core, use @samp{configure} with
+the @samp{--enable-doubles} option.
+Under Visual C++, doubles can be enabled using the @samp{-DUSE_DOUBLES}
+preprocessing flag.
+Note that this flag only affects the floating-point numbers that are used
+internally in SOLID. 
+The API functions always use single-precision floating-point numbers.
+    
+In the same way, the SOLID core can be built using a tracer class for
+scalars. 
+See the file @samp{MT_ScalarTracer.h} in the @samp{include} directory.
+A scalar tracer is used for tracing rounding errors in results of
+floating-point operations. 
+An object of the type @code{MT_ScalarTracer} has a value field and an error
+field. The value field holds the result of an operation, and the error
+field multiplied by the machine epsilon gives an estimated upper bound for the
+relative rounding error. 
+The @code{MT_ScalarTracer} class behaves as the primitive scalar types
+@code{float} and @code{double}, however, constants of this type have to be
+constructed explicitly.   
+In order to build a SOLID core that uses scalar tracers, create Makefiles using
+@samp{configure} with the @samp{--enable-tracer} option.
+Under Visual C++, the tracers are enabled using the @samp{-DUSE_TRACER}
+preprocessing flag.
+This option is very useful for debugging purposes.
+Makefiles for building debug binaries of SOLILD are created using the
+@samp{--enable-debug} option.
+  
+
+ 
+
+@node Usage, Projects, Installation, Top
+@chapter The SOLID API
+
+The SOLID API is a set of C functions. All API functions, also referred to as
+commands, use arguments that have primitive types, such as, integers, floats,
+and arrays of floats, or handles (type-mangled pointers) to internal objects
+of SOLID. The types @code{DT_Scalar}, @code{DT_Vector} and @code{DT_Quaternion} are simply
+typedefs:
+@example
+
+typedef float     DT_Scalar; 
+typedef DT_Scalar DT_Vector3[3]; 
+typedef DT_Scalar DT_Quaternion[4]; 
+
+@end example 
+The MT C++ classes can be used for representing geometric data such as vectors
+and quaternions as they are implicitly casted to arrays of floats, however the
+use of these classes is not required for calling SOLID functions.
+SOLID API functions can be called using your own or third-party 3D geometry
+objects if you stick with the following rules:
+@itemize @bullet
+
+@item All used scalar types are of the type @code{float}.
+
+@item Quaternions store their imaginary vector part before the real scalar
+part. Thus, for an array @code{float q[4]} that represents a quaternion,
+@code{q[3]} must be the scalar part.
+
+@item Transformations are specified using arrays of 16 floating-point numbers
+representing a 4x4 column-major matrix as used in OpenGL. This matrix representation is
+discussed below.
+
+
+@end itemize
+
+@section Building Shapes
+
+The commands for creating and destroying shapes are 
+@example
+
+DT_ShapeHandle DT_NewBox(DT_Scalar x, DT_Scalar y, DT_Scalar z);
+DT_ShapeHandle DT_NewCone(DT_Scalar radius, DT_Scalar height);
+DT_ShapeHandle DT_NewCylinder(DT_Scalar radius, DT_Scalar height);
+DT_ShapeHandle DT_NewSphere(DT_Scalar radius);
+DT_ShapeHandle DT_NewPoint(const DT_Vector3 point); 
+DT_ShapeHandle DT_NewLineSegment(const DT_Vector3 source, 
+                                 const DT_Vector3 target);
+
+DT_ShapeHandle DT_NewMinkowski(DT_ShapeHandle shape1, 
+                               DT_ShapeHandle shape2);
+DT_ShapeHandle DT_NewHull(DT_ShapeHandle shape1, 
+                          DT_ShapeHandle shape2);
+
+void           DT_DeleteShape(DT_ShapeHandle shape);
+
+@end example
+Shapes are referred to by values of @code{DT_ShapeHandle}. 
+The command @code{DT_NewBox} creates a rectangular parallelepiped centered
+at the origin and aligned with the axes of the shape's local coordinate system.
+The parameters specify its extent along the respective coordinate axes.
+The commands @code{DT_NewCone} and @code{DT_NewCylinder} create respectively a
+cone and a cylinder centered
+at the origin and whose central axis is aligned with the @math{y}-axis of the
+local coordinate system.
+The cone's apex is at @math{y = height / 2}. 
+The command @code{DT_NewSphere} creates a sphere centered at the origin of
+the local coordinate system.
+The command @code{DT_NewPoint} creates a single point. 
+The command @code{DT_NewLineSegment} creates a single line segment in a
+similar way.
+
+Any pair of convex shapes (including general polytopes) can be combined to
+form compound shapes using the commands @code{DT_NewMinkowski} and
+@code{DT_NewHull}.
+The command @code{DT_NewMinkowski} `adds' the two shapes by sweeping one
+shape along the other. For instance, the Minkowski addition of a sphere and a
+line segment creates a hot dog. 
+The command @code{DT_NewHull} creates a shape that represents the exact convex
+hull of the two shapes.
+
+Complex shape types composed of simple polytopes (polytope soups) are
+created using the 
+@code{DT_NewComplexShape} command.
+Here, a simple polytope is a @math{d}-dimensional polytopes, where
+@math{d} is at most 3. 
+A simple @math{d}-polytope can be a simplex (point, line segment, triangle,
+tetrahedron), a convex polygon, or a convex polyhedron.
+
+There are no topological constraints on the set of vertices of a polytope.
+In particular, the vertices of a polytope need not be affinely independent,
+and need not be extreme vertices of the convex hull.
+However, convex polytopes with many vertices may deteriorate the performance.
+Such complex polytopes should be created using the @code{DT_NewPolytope} command.
+Make sure that in that case, SOLID is built using Qhull.
+
+For constructing complex shapes the following
+commands are used:  
+@example
+DT_VertexBaseHandle DT_NewVertexBase(const void *pointer, 
+                                     DT_Size stride);
+void DT_DeleteVertexBase(DT_VertexBaseHandle vertexBase);	
+void DT_ChangeVertexBase(DT_VertexBaseHandle vertexBase, 
+                         const void *pointer);
+
+DT_ShapeHandle DT_NewComplexShape(DT_VertexBaseHandle vertexBase);
+void           DT_EndComplexShape();
+
+DT_ShapeHandle DT_NewPolytope(DT_VertexBaseHandle vertexBase);
+void           DT_EndPolytope();
+
+void DT_Begin();
+void DT_End();
+
+void DT_Vertex(const DT_Vector3 vertex);
+void DT_VertexIndex(DT_Index index);
+
+void DT_VertexIndices(DT_Count count, const DT_Index *indices);
+void DT_VertexRange(DT_Index first, DT_Count count); 
+
+@end example
+A @math{d}-polytope is specified by enumerating its vertices. This can be done
+in two ways. In the first way, the vertices are specified by value,
+using the @code{DT_Vertex} command. The following example shows how the
+faces of a pyramid are specified.   
+@example
+
+DT_Vector3 float verts[] = @{ 
+		   @{  1.0f,  0.0f,  1.0f @},
+		   @{  1.0f,  0.0f, -1.0f @},
+		   @{ -1.0f,  0.0f, -1.0f @}, 
+		   @{ -1.0f,  0.0f,  1.0f @},
+		   @{  0.0f, 1.27f,  0.0f @}
+@};
+
+DT_ShapeHandle pyramid = DT_NewComplexShape(NULL);
+
+DT_Begin();
+DT_Vertex(verts[0]); 
+DT_Vertex(verts[1]); 
+DT_Vertex(verts[2]); 
+DT_Vertex(verts[3]);
+DT_End();
+
+DT_Begin();
+DT_Vertex(verts[0]); 
+DT_Vertex(verts[1]); 
+DT_Vertex(verts[4]); 
+DT_End();
+
+...
+
+DT_EndComplexShape();
+
+@end example
+Here, an argument of @code{NULL} in @code{DT_NewComplexShape}@ denotes that the
+complex shape does not use an external vertex array.
+
+In the second method, the vertices are referred to by indices. 
+For each complex shape, we specify a single array of vertices.
+Vertex arrays are maintained by the client application and can be
+accessed directly by SOLID. 
+Vertex arrays are accessed via vertex bases.
+The command @code{DT_NewVertexBase} creates a vertex base for 
+the array given by the argument @code{pointer}. 
+The client must maintain vertex data in single-precision floating-point
+format.
+The client is free to store vertex data using arbitrary spacing
+in-between the individual array items.   
+The spacing is specified using the @code{DT_Size stride} parameter.
+For instance, the client maintains an array of vertices of the type:
+@example
+   
+struct Vertex @{
+    float xyz[3];
+    float uv[2];
+    float normal[3];
+@};
+
+struct Vertex verts[NUM_VERTICES];
+
+@end example
+When specifying a complex shape you can use this data as follows
+@example
+
+DT_VertexBaseHandle base = DT_NewVertexBase(verts[0].xyz, 
+                                            sizeof(struct Vertex));
+
+@end example 
+A stride of zero denotes that the vertex coordinate data is packed in a
+separate array, thus
+@example
+
+DT_Vector3 verts[NUM_VERTICES];
+
+DT_VertexBaseHandle base = DT_NewVertexBase(verts[0], 0);
+
+@end example 
+Each time the vertices are updated, or a new vertex base is assigned,
+to a complex shape, for instance, when using a deformable triangle mesh,
+the client needs to notify SOLID of a changed vertex array by calling 
+@code{DT_ChangeVertexBase}. 
+We discuss the use of this command further on.
+
+The handle to the vertex base is passed as argument to @code{DT_NewComplexShape}.
+The command @code{DT_VertexIndex} is used for
+specifying vertices. See the following example:
+@example
+
+DT_ShapeHandle pyramid = DT_NewComplexShape(base);
+
+DT_Begin();
+DT_VertexIndex(0); 
+DT_VertexIndex(1); 
+DT_VertexIndex(2); 
+DT_VertexIndex(3); 
+DT_End();
+
+DT_Begin();
+DT_VertexIndex(0); 
+DT_VertexIndex(1); 
+DT_VertexIndex(4); 
+DT_End();
+
+...
+
+DT_EndComplexShape();
+
+@end example
+Alternatively, the indices can be placed into an array and specified
+using the command @code{DT_VertexIndices}, as in the following example:
+@example
+
+DT_Index face0[4] = @{ 0, 1, 2, 3 @};
+DT_Index face1[3] = @{ 0, 1, 4 @};
+
+...
+
+DT_VertexIndices(4, face0);
+DT_VertexIndices(3, face1);
+
+@end example
+Finally, a polytope can be specified from a range of vertices using the
+command @code{DT_VertexRange}.
+The range is specified by the first index and the number of vertices.
+In the following example a pyramid is constructed as a convex polyhedron,
+which is the convex hull of the vertices in the array.
+@example
+
+DT_ShapeHandle pyramid = DT_NewComplexShape(base);
+DT_VertexRange(0, 5);
+DT_EndComplexShape();
+
+@end example
+The same shape can be built using the @code{DT_NewPolytope} command:
+@example
+
+DT_ShapeHandle pyramid = DT_NewPolytope(base);
+DT_VertexRange(0, 5);
+DT_EndPolytope();
+
+@end example
+Note that within a @code{DT_NewPolytope} construction all the vertex array
+commands can be used to specify vertices.
+The commands @code{DT_Begin} and @code{DT_End} are ignored for polytopes. 
+Convex polytopes constructed using the @code{DT_NewPolytope} command
+are preprocessed by SOLID in order to allow for faster testing, and
+should be used when the number of vertices is large.  
+
+
+@section Creating and Moving Objects
+
+An object is an instance of a shape.
+The commands for creating, moving and deleting objects are 
+@example
+
+DT_ObjectHandle DT_CreateObject(void *client_object, DT_ShapeHandle shape); 
+void            DT_DestroyObject(DT_ObjectHandle object);
+
+void DT_SetPosition(DT_ObjectHandle object, const DT_Vector3 position);
+void DT_SetOrientation(DT_ObjectHandle object, 
+                       const DT_Quaternion orientation);
+void DT_SetScaling(DT_ObjectHandle object, const DT_Vector3 scaling);
+
+void DT_SetMatrixf(DT_ObjectHandle object, const float *m); 
+void DT_SetMatrixd(DT_ObjectHandle object, const double *m); 
+
+void DT_SetMargin(DT_ObjectHandle object, DT_Scalar margin);
+
+@end example
+An object is referred to by a @code{DT_ObjectHandle}.
+The first parameter @code{void *client_object} is a pointer to an
+arbitrary structure in the client application.
+This pointer is passed as parameter to the callback function in case of
+a collision, and can be used for collision handling. 
+In general, a pointer to a structure in the client application
+associated with the collision object should be used.
+
+An object's motion is specified by changing the placement of the local
+coordinate system of the shape.  
+Initially, the local coordinate system of an object
+coincides with the world coordinate system. 
+
+The placement of an object is changed, either by setting the position,
+orientation, and scaling, or by using an OpenGL 4x4
+column-major matrix representing an affine transformation. 
+Placements are specified relative to the world coordinate system.
+Rotations are specified using quaternions. 
+The object's local coordinate system can be scaled non-uniformly by
+specifying a scale factor per coordinate axis.
+Following example shows how a pair
+of objects are given absolute placements.  
+@example
+
+DT_ObjectHandle objectHandle = DT_CreateObject(&myObject, shapeHandle);
+
+float position = @{ 0.0f, 1.0f, 1.0f @};
+float orientation = @{ 0.0f, 0.0f, 0.0f, 0.1f @};
+float scaling = @{ 1.0f, 2.0f, 1.0f @};
+ 
+DT_SetPosition(objectHandle, position);
+DT_SetOrientation(objectHandle, orientation);
+DT_SetScaling(objectHandle, scaling);
+
+@end example
+For scalings along axes that are not coordinate axes, such as shears,
+you should construct a 4x4 column-major matrix representation of the
+local coordinate system and use @code{DT_SetMatrix} to specify the
+object placement. 
+
+The @math{x}-axis of the local coordinate system relative
+to the world coordinate system is the vector (m[0], m[1], m[2]), the
+@math{y}-axis is (m[4], m[5], m[6]), the @math{z}-axis is (m[8], m[9],
+m[10]), and the local origin is (m[12], m[13], m[14]).
+The elements m[3], m[7], m[11], and m[15] are ignored. 
+These values are assumed to be 0, 0, 0, and 1, respectively.
+Thus, only affine transformations are allowed.  
+
+By setting a positive margin using @code{DT_SetMargin} you can
+spherically expand an object. The actual collision object is the set of
+points whose distance to the transformed shape is at most the margin.
+For instance, a hot dog or capsule can be created using
+@example
+
+DT_Vector3 source = @{ 0.0f, 0.0f, 0.0f @}
+DT_Vector3 target = @{ 0.0f, -1.5f, 0.0f @}
+
+DT_ShapeHandle line = DT_NewLineSegment(source, target);
+
+DT_ObjectHandle object = DT_CreateObject(&myHotDog, line);
+DT_SetMargin(object, 0.3f);
+
+@end example    
+This object is useful for navigating along walls and over terrains
+Positions, orientations, scalings, and margins may all be changed during the
+life time of an object. 
+
+
+@subsection Who's Afraid of Quaternions?
+
+A quaternion is a four-dimensional vector. The set of quaternions of
+length one (points on a four-dimensional sphere) map to the set of
+orientations in three-dimensional space. Since in many applications an
+orientation defined by either a rotation axis and angle or by a
+triple of Euler angles is more convenient, the package includes code for
+quaternion operations. The code is found in the mathematics toolkit (MT). 
+
+The quaternion class is located in the file @file{MT_Quaternion.h}. The class
+has constructors and methods for setting a quaternion. For example
+@example
+
+MT_Quaternion q1(axis, angle);
+MT_Quaternion q2(yaw, pitch, roll);
+
+...
+
+q1.setRotation(axis, angle);
+q2.setEuler(yaw, pitch, roll);
+
+...
+
+DT_SetOrientation(objectHandle, q1);
+
+@end example
+Also included is a static method @code{MT_Quaternion::random()}, which
+returns a random orientation.
+
+@subsection Proximity Queries
+
+Objects can also be queried directly using the commands
+@example
+
+DT_Scalar DT_GetClosestPair(DT_ObjectHandle object1, DT_ObjectHandle object2,
+                            DT_Vector3 point1, DT_Vector3 point2);  
+
+DT_Bool   DT_GetCommonPoint(DT_ObjectHandle object1, DT_ObjectHandle object2,
+                            DT_Vector3 point);
+
+DT_Bool   DT_GetPenDepth(DT_ObjectHandle object1, DT_ObjectHandle object2,
+                         DT_Vector3 point1, DT_Vector3 point2);  
+
+@end example 
+The command @code{DT_GetClosestPair} returns the distance between
+@code{object1} and @code{object2}, and a pair of closest points
+@code{point1} and @code{point2} given in world coordinates
+The command @code{DT_GetCommonPoint} returns a boolean that denotes
+whether the objects @code{object1} and @code{object2} intersect, and, in
+case of an intersection, returns a common point @code{point} in world
+coordinates. 
+The command @code{DT_GetPenDepth} also returns a boolean that denotes
+whether the objects @code{object1} and @code{object2} intersect, and, in
+case of an intersection, returns a pair of witness points of the
+penetration depth @code{point1} and @code{point2} in world coordinates.
+
+The maximum relative error in the closest points and penetration depth
+computation can be set using
+@example
+
+void DT_SetAccuracy(DT_Scalar max_error);
+
+@end example
+The default for @code{max_error} is 1.0e-3. Larger errors result
+in better performance. Non-positive error tolerances are ignored.
+
+The maximum tolerance on relative errors due to rounding is set using
+@example
+
+void DT_SetTolerance(DT_Scalar tol_error);
+
+@end example
+This value is the estimated relative rounding error in complex computations
+and is used for determining whether a floating-point number should be regarded 
+as zero or not. The default value for `tol_error' is the machine epsilon,
+which is @code{FLT_EPSILON} when floats are used, and @code{DBL_EPSILON} when
+double-precision floating-point numbers are used internally. Very large
+tolerances result in false collisions. Setting tol_error too small  
+results in missed collisions. Non-positive error tolerances are ignored. 
+
+
+Furthermore, objects can be queried to return data maintained internally.
+The world-axes aligned bounding box of an object is returned using
+@example
+
+void DT_GetBBox(DT_ObjectHandle object, DT_Vector3 min, DT_Vector3 max);
+
+@end example
+Here, @code{min} and @code{max} are the vertices of the box with
+respectively the least and greatest world coordinates.
+The local-to-world transformation of an object can be returned using
+@example
+
+void DT_GetMatrixf(DT_ObjectHandle object, float *m); 
+void DT_GetMatrixd(DT_ObjectHandle object, double *m); 
+
+@end example
+The arguments of these commands are again arrays of 16 floating-point numbers 
+that represent a 4x4 column-major matrix as discussed above.
+ 
+  
+@section Scenes
+
+For scenes with many objects the number of pairwise intersection queries can
+become quite large. 
+To overcome this bottleneck, objects are maintained in scenes.
+The commands for construction and destroying scenes are:
+@example
+
+DT_SceneHandle DT_CreateScene(); 
+void           DT_DestroyScene(DT_SceneHandle scene);
+void           DT_AddObject(DT_SceneHandle scene, 
+                            DT_ObjectHandle object);
+void           DT_RemoveObject(DT_SceneHandle scene,
+                               DT_ObjectHandle object);
+
+@end example
+Objects can be shared by multiple scenes. 
+Each scene tracks the changes of
+placement and deformations of its objects, and updates its cached data
+accordingly. In this way, global collision queries using @code{DT_Test} (see
+below) can be processed much faster.  
+
+
+
+@section Response Handling
+
+Collision response in SOLID is handled by means of callback functions.
+The callback functions have the type @code{DT_ResponseCallback} defined by
+@example
+
+typedef DT_Bool (*DT_ResponseCallback)(void *client_data, 
+                                       void *client_object1, 
+                                       void *client_object2,
+                                       const DT_CollData *coll_data);
+
+@end example
+Here, @code{client_data} is a pointer to an arbitrary structure in the
+client application, @code{client_object1} and @code{client_object2} are
+the pointers to structures in the client application specified in
+@code{DT_CreateObject}, and @code{coll_data} is the response data computed by
+SOLID. 
+The Boolean value returned by a callback functions indicates whether
+further processing of callbacks is needed.
+If @code{DT_FALSE} or @code{DT_CONTINUE} is returned, then the remaining
+colliding object pairs are processed.
+If @code{DT_TRUE} or @code{DT_DONE} is returned, then the call to
+@code{DT_Test} is exited without further processing.
+We discuss the @code{DT_Test} further on. 
+   
+Currently, there are three types of response: @dfn{simple},
+@dfn{depth} and @dfn{witnessed} response. For simple response the value
+of @code{coll_data} is @code{NULL}. 
+For depth and witnessed response @code{coll_data} points to the
+following structure 
+@example
+
+
+typedef struct DT_CollData @{
+    DT_Vector3 point1;
+    DT_Vector3 point2;
+    DT_Vector3 normal;
+@} DT_CollData;
+
+@end example 
+An object of this type represents a pair of points of the respective
+objects. The points  @code{point1} and @code{point2} are given relative
+to the world coordinate system. The @code{normal} field is used for
+depth response only. 
+
+For witnessed response, the points represent a witness of the collision.
+Both points are contained in the intersection of the colliding objects.
+Note that the witness points are not necessarily equal.
+For depth response, the @code{normal} represent the penetration depth
+vector. 
+The penetration depth vector is the shortest vector over which one
+object needs to be translated in order to bring the two objects into
+touching contact.
+The @code{point1} and @code{point2} fields contain the witness points of
+the penetration depth, thus @code{normal = point2 - point1}.
+
+Response callbacks are managed in @dfn{response tables}. 
+Response tables are defined independent of the scenes in which they are used.
+Multiple response tables can be used in one scene, and a response table
+can be shared among scenes.
+Responses are defined on (pairs of) response classes. Each response table 
+maintains its set of response classes.
+A response table is created and destroyed using the commands
+@example 
+
+DT_RespTableHandle DT_CreateRespTable(); 
+void               DT_DestroyRespTable(DT_RespTableHandle respTable); 
+
+@end example
+A response class for a response table is generated using
+@example 
+
+DT_ResponseClass DT_GenResponseClass(DT_RespTableHandle respTable);
+ 
+@end example
+To each object for which a response is defined in the response table a
+response class needs to be assigned. This is done using
+@example
+
+void DT_SetResponseClass(DT_RespTableHandle respTable,
+                         DT_ObjectHandle object,
+                         DT_ResponseClass responseClass);
+
+
+@end example 
+For each pair of objects multiple responses can be defined. A response
+is a callback together with its response type and client data.
+The @code{DT_ResponseType} is defined by
+@example 
+
+typedef enum DT_ResponseType @{ 
+    DT_NO_RESPONSE,
+    DT_SIMPLE_RESPONSE, 
+    DT_WITNESSED_RESPONSE   
+    DT_DEPTH_RESPONSE,
+@} DT_ResponseType;
+
+@end example
+Responses can be defined for all pairs of response classes...
+@example
+
+void DT_AddDefaultResponse(DT_RespTableHandle respTable,
+                           DT_ResponseCallback response,
+                           DT_ResponseType type,
+                           void *client_data);
+
+void DT_RemoveDefaultResponse(DT_RespTableHandle respTable,
+                              DT_ResponseCallback response);
+
+@end example
+...per response class...
+@example
+
+void DT_AddClassResponse(DT_RespTableHandle respTable,
+                         DT_ResponseClass responseClass,
+                         DT_ResponseCallback response,
+                         DT_ResponseType type,
+                         void *client_data);
+
+void DT_RemoveClassResponse(DT_RespTableHandle respTable,
+                            DT_ResponseClass responseClass,
+                            DT_ResponseCallback response);
+
+@end example
+... and per pair of response classes...
+@example
+
+void DT_AddPairResponse(DT_RespTableHandle respTable,
+                        DT_ResponseClass responseClass1,
+                        DT_ResponseClass responseClass2, 
+                        DT_ResponseCallback response,
+                        DT_ResponseType type, 
+                        void *client_data);
+
+void DT_RemovePairResponse(DT_RespTableHandle respTable,
+                           DT_ResponseClass responseClass1,
+                           DT_ResponseClass responseClass2,
+                           DT_ResponseCallback response);
+
+@end example
+If for an object pair, one of the objects has a class object response defined,
+that needs to be overruled by a pair response, then you should remove
+the callback defined in the class response for the pair and add the pair
+response, thus
+@example
+
+DT_AddClassResponse(respTable, class1, classResponse, 
+                    DT_SIMPLE_RESPONSE, client_data);
+
+DT_RemovePairResponse(respTable, class1, class2, classResponse);
+
+DT_AddPairResponse(respTable, class1, class2, pairResponse, 
+                   DT_DEPTH_RESPONSE, client_data);
+
+@end example
+In the same way, a default response can be overruled by a class or pair
+response. 
+
+The response callback functions are executed by calling
+@example
+
+DT_Count DT_Test(DT_SceneHandle scene, DT_RespTableHandle respTable);
+
+@end example
+This command calls for each colliding pair of objects the corresponding
+callback function until all pairs are processed or until a callback function
+returns @code{DT_TRUE} or @code{DT_DONE}.   
+It returns the number of object pairs for which callback functions have been
+executed.
+
+Note: If the response classes of the objects in a callback differ, then
+@code{client_object1} has a `lower' response class than
+@code{client_object2}. That is, the response class of @code{client_object1} is
+generated before the response class of @code{client_object2}. 
+
+
+@section Deformable Models
+
+SOLID handles deformations of complex shapes.  In this context
+deformations are specified by changes of vertex positions. 
+Complex shapes that are defined using a vertex array in the client
+application may be deformed by changing the array elements, or
+specifying a new array. 
+SOLID is notified of a change of vertices by the command 
+@example
+
+void DT_ChangeVertexBase(DT_VertexBaseHandle vertexBase, 
+                         const void *pointer);
+
+@end example 
+Note that polytopes constructed from a vertex base using @code{DT_NewPolytope} are not affected
+by a change of vertices. 
+
+@section Ray Cast
+
+NOTE: This feature is currently implemented for spheres, boxes, triangles, and
+triangle meshes only.
+Also, margins are ignored for ray casts.
+
+The commands for performing ray casts are 
+@example
+
+void *DT_RayCast(DT_SceneHandle scene, void *ignore_client,
+                 const DT_Vector3 source, 
+                 const DT_Vector3 target,
+                 DT_Scalar max_param, 
+                 DT_Scalar *param, DT_Vector3 normal);
+
+DT_Bool DT_ObjectRayCast(DT_ObjectHandle object,
+                         const DT_Vector3 source, 
+                         const DT_Vector3 target,
+                         DT_Scalar max_param, 
+                         DT_Scalar *param, DT_Vector3 normal); 
+
+@end example
+The ray is given by @code{source}, @code{target}, and @code{max_param}.
+It represents the line segment @math{@code{source} + (@code{target} - @code{source}) * t},
+where @math{t} is a member of the interval @math{[0, @code{max_param}]}.
+So, if @code{max_param} is 1, then the ray is simply the line segment from
+@code{source} to @code{target}, whereas if @code{max_param} is equal to
+@code{FLT_MAX}, then the ray is `infinite'.     
+
+@code{DT_RayCast} returns a pointer to the client object of an object in
+@code{scene} that is hit first by the ray, or @code{NULL} if no object is hit. 
+@code{DT_ObjectRayCast} performs a ray cast on a single object and
+returns a Boolean indicating a hit. 
+In case of a hit, @code{param} points to the @math{t} of the hit spot,
+and @code{normal} is a normal to the object's surface in world coordinates.
+The normal always points towards the @code{source}.
+An object can be made transparent for the ray cast by specifying the
+object's client object as @code{ignore_client}.
+This is useful if you need to ignore hits of the ray with the source
+object of the ray. 
+For instance terrain following can be implemented by casting a ray down
+and setting the moving object at a distance above the spot.
+In this case, you are probably interested in hits with the terrain only,
+and do not need reports of hits with the moving object. 
+
+@node Projects, Bugs, Usage, Top
+@chapter Projects and other things left to do
+
+@section Coming Attractions
+
+SOLID 4 will have the following added features:
+@enumerate
+
+@item Compressed AABB trees for reducing the memory footprint of triangle
+meshes to roughly 18 bytes per triangle.  
+
+@item A general ray cast for all shape types. 
+
+@item Shape casting: returning the first collision of a shape that is translated along
+a ray. 
+
+@item Scene graphs for managing complex shapes.
+
+@item A binary format for streaming of shapes.
+
+@end enumerate
+
+@node Bugs, , Projects, Top
+@chapter Bug Reports
+
+Please send remarks, questions, and bug reports to gino@@dtecta.com.
+
+NOTE: There is no termination after a fixed maximum number of
+iterations of GJK in this version of SOLID, since I believe in an
+industrial-strength GJK without resorting to tolerance tweaking or forced 
+termination after a certain number of iterations. I welcome any reports
+of SOLID misbehaving.  
+
+
+@node GPL, , , License
+@include gpl.texi
+
+@node QPL, , , License
+@include qpl.texi
+
+@contents
+@bye
+
+
