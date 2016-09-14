@@ -83,6 +83,7 @@ add_library(solid3 ${LIBRARY_TYPE}
   $<TARGET_OBJECTS:qhull>
 )
 
+target_include_directories(solid3 INTERFACE $<INSTALL_INTERFACE:$<INSTALL_PREFIX>/${CMAKE_INSTALL_INCLUDEDIR}>)
 set_target_properties(solid3 PROPERTIES VERSION ${VERSION})
 
 install(
