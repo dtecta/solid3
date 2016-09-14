@@ -109,4 +109,4 @@ configure_package_config_file(
 install(FILES ${CMAKE_CURRENT_BINARY_DIR}/solid3-config.cmake DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/solid3)
 write_basic_package_version_file(${CMAKE_CURRENT_BINARY_DIR}/solid3-config-version.cmake VERSION ${VERSION} COMPATIBILITY ExactVersion)
 install(FILES ${CMAKE_CURRENT_BINARY_DIR}/solid3-config-version.cmake DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/solid3)
-install(EXPORT solid3 DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/solid3 FILE solid3-export.cmake)
+install(EXPORT solid3 DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/solid3 NAMESPACE solid3:: FILE solid3-export.cmake)
