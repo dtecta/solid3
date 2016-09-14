@@ -30,6 +30,12 @@ if(NOT DYNAMIC_SOLID)
   add_definitions(-DSOLID_STATIC)
 endif(NOT DYNAMIC_SOLID)
 
+option(USE_DOUBLES "Use double-precision floating-point numbers." OFF)
+
+if(USE_DOUBLES)
+  add_definitions(-DUSE_DOUBLES)
+endif(USE_DOUBLES)
+
 include_directories(
 	${PROJECT_SOURCE_DIR}/include
 )
