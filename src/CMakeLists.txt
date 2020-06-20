@@ -1,12 +1,10 @@
 add_subdirectory(qhull)
 
-if(DYNAMIC_SOLID)
-  set(LIBRARY_TYPE "SHARED")
+if(BUILD_SHARED_LIBS)
   add_definitions(-DSOLID_DLL_EXPORT)
-else(DYNAMIC_SOLID)
-  set(LIBRARY_TYPE "STATIC")
+else()
   add_definitions(-DSOLID_STATIC)
-endif(DYNAMIC_SOLID)
+endif()
 
 include_directories(${PROJECT_SOURCE_DIR}/src)
 include_directories(${PROJECT_SOURCE_DIR}/src/broad)
@@ -19,7 +17,7 @@ set(SOLID_PUBLIC_HEADERS
   ${PROJECT_SOURCE_DIR}/include/SOLID_types.h
 )
 
-add_library(solid3 ${LIBRARY_TYPE}
+add_library(solid3
   ${SOLID_PUBLIC_HEADERS}
   broad/BP_C-api.cpp
   broad/BP_Endpoint.h
@@ -102,7 +100,7 @@ else()
         LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT runtime NAMELINK_SKIP
         RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR} COMPONENT runtime
     )
-    if(DYNAMIC_SOLID)
+    if(BUILD_SHARED_LIBS)
         install(
             TARGETS solid3
             EXPORT solid3
@@ -116,6 +114,6 @@ install(
     COMPONENT development
 )
 
-if(MSVC AND DYNAMIC_SOLID AND ${CMAKE_MAJOR_VERSION} GREATER 2 AND ${CMAKE_MINOR_VERSION} GREATER 0)
+if(MSVC AND BUILD_SHARED_LIBS AND ${CMAKE_MAJOR_VERSION} GREATER 2 AND ${CMAKE_MINOR_VERSION} GREATER 0)
     install(FILES $<TARGET_PDB_FILE:solid3> DESTINATION ${CMAKE_INSTALL_BINDIR} CONFIGURATIONS Debug RelWithDebInfo COMPONENT debug)
 endif()

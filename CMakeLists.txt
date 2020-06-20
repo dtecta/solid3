@@ -24,11 +24,11 @@ set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${OUTPUT_LIBDIR})
 
 
 # Dynamic vs Static Linking
-option(DYNAMIC_SOLID "Set to ON to build SOLID for dynamic linking.  Use OFF for static." ON)
+option(BUILD_SHARED_LIBS "Set to ON to build SOLID for dynamic linking.  Use OFF for static." ON)
 
-if(NOT DYNAMIC_SOLID)
+if(NOT BUILD_SHARED_LIBS)
   add_definitions(-DSOLID_STATIC)
-endif(NOT DYNAMIC_SOLID)
+endif()
 
 option(USE_DOUBLES "Use double-precision floating-point numbers." OFF)
 
@@ -89,10 +89,10 @@ endif(MSVC)
 if(UNIX)
   set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall -ffast-math -msse2 -mfpmath=sse")
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fno-rtti -Wall -ffast-math -msse2 -mfpmath=sse")
-  if (DYNAMIC_SOLID)
+  if (BUILD_SHARED_LIBS)
     set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fPIC")
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fPIC")
-  endif(DYNAMIC_SOLID)
+  endif()
   set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -lrt")
 endif(UNIX)
 
