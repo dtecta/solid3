@@ -30,6 +30,12 @@ if(NOT BUILD_SHARED_LIBS)
   add_definitions(-DSOLID_STATIC)
 endif()
 
+option(USE_EXTERNAL_QHULL "Use external Qhull library." OFF)
+
+if(USE_EXTERNAL_QHULL)
+  find_package(Qhull REQUIRED)
+endif()
+
 option(USE_DOUBLES "Use double-precision floating-point numbers." OFF)
 
 if(USE_DOUBLES)
