@@ -357,6 +357,18 @@ void DT_SetOrientation(DT_ObjectHandle object, const DT_Quaternion orientation)
 }
 
 
+void DT_SetMatrix(DT_ObjectHandle object, const DT_Scalar *m)
+{
+	assert(object);
+	reinterpret_cast<DT_Object *>(object)->setMatrix(m);
+}
+
+void DT_GetMatrix(DT_ObjectHandle object, DT_Scalar *m)
+{
+	assert(object);
+	reinterpret_cast<DT_Object *>(object)->getMatrix(m);
+}
+
 void DT_SetMatrixf(DT_ObjectHandle object, const float *m) 
 {
 	assert(object);
