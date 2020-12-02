@@ -270,7 +270,7 @@ public:
 #ifdef DRAW_COORD
 		coordSystem();
 #endif
-		glColor3fv(m_color);
+		glColor3f(m_color[0], m_color[1], m_color[2]);
 		m_gl_shape->paint();
 		glPopMatrix();
 	}
@@ -353,10 +353,10 @@ DT_ShapeHandle createComplex()
             int j1 = j0 + 1;
 
 			MT_Vector3 verts[4];
-			verts[0].setValue(GRID_UNIT * i0, 0.25f * (i0*i0 + j0*j0), GRID_UNIT * j0);
-            verts[1].setValue(GRID_UNIT * i0, 0.25f * (i0*i0 + j1*j1), GRID_UNIT * j1);
-            verts[2].setValue(GRID_UNIT * i1, 0.25f * (i1*i1 + j1*j1), GRID_UNIT * j0);
-            verts[3].setValue(GRID_UNIT * i1, 0.25f * (i1*i1 + j0*j0), GRID_UNIT * j1);
+			verts[0].setValue(GRID_UNIT * i0, MT_Scalar(0.25) * (i0*i0 + j0*j0), GRID_UNIT * j0);
+            verts[1].setValue(GRID_UNIT * i0, MT_Scalar(0.25) * (i0*i0 + j1*j1), GRID_UNIT * j1);
+            verts[2].setValue(GRID_UNIT * i1, MT_Scalar(0.25) * (i1*i1 + j1*j1), GRID_UNIT * j0);
+            verts[3].setValue(GRID_UNIT * i1, MT_Scalar(0.25) * (i1*i1 + j0*j0), GRID_UNIT * j1);
 #ifdef USE_QUADS
             DT_Begin();
             DT_Vertex(verts[0]);
@@ -433,7 +433,7 @@ DT_Bool body2body_fix(void *client_data,
 	Object& obj2 = *(Object *)object2;
 	MT_Vector3 normal(coll_data->normal);	
    
-	MT_Vector3 error = normal * 0.5f;
+	MT_Vector3 error = normal * MT_Scalar(0.5);
 	obj1.correct(error);
 	obj2.correct(-error);	
 	
@@ -500,7 +500,7 @@ void display(void)
 static MT_Scalar DISTANCE = 20; 
 
 static MT_Scalar ele = 0, azi = 0;
-static MT_Point3 eye(0.0f, 0.0f, DISTANCE);
+static MT_Point3 eye(MT_Scalar(0), MT_Scalar(0), DISTANCE);
 static MT_Point3 center(0, 0, 0);
 
 inline double irnd() { return 2 * MT_random() - 1; }  

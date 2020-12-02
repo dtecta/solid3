@@ -35,8 +35,8 @@ void RigidBody::setGravity(const MT_Vector3& acceleration)
 
 void RigidBody::setDamping(MT_Scalar lin_damping, MT_Scalar ang_damping)
 {
-	m_lin_damping = GEN_clamped(1.0f - lin_damping, 0.0f, 1.0f);
-	m_ang_damping = GEN_clamped(1.0f - ang_damping, 0.0f, 1.0f);
+	m_lin_damping = GEN_clamped(MT_Scalar(1) - lin_damping, MT_Scalar(0), MT_Scalar(1));
+	m_ang_damping = GEN_clamped(MT_Scalar(1) - ang_damping, MT_Scalar(0), MT_Scalar(1));
 }
 
 void RigidBody::reset(const MT_Transform& xform)
@@ -69,7 +69,7 @@ void RigidBody::backup()
 
 inline MT_Scalar restitutionCurve(MT_Scalar rel_vel, MT_Scalar restitution)
 {
-	return restitution * GEN_min(1.0f, rel_vel / ContactThreshold);
+	return restitution * GEN_min(MT_Scalar(1), rel_vel / ContactThreshold);
 }
 
 void RigidBody::resolveCollision(const MT_Vector3& pos, 
