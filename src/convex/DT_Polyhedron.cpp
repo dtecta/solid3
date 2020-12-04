@@ -26,7 +26,15 @@
 #ifdef QHULL
 
 extern "C" {
+#if HAVE_LIBQHULL_R_QHULL_RA_H
+#include <libqhull_r/qhull_ra.h>
+#elif HAVE_QHULL_R_QHULL_RA_H
+#include <qhull_r/qhull_ra.h>
+#elif HAVE_LIBQHULL_QHULL_A_H
+#include <libqhull/qhull_a.h>
+#else
 #include <qhull/qhull_a.h>
+#endif
 }
 
 #include <vector>
@@ -60,26 +68,49 @@ T_IndexBuf *adjacency_graph(DT_Count count, const MT_Point3 *verts, const char *
 		}
     }
 
-    qh_init_A(stdin, stdout, stderr, 0, NULL);
+#if defined(QHULL_LIB_TYPE) && QHULL_LIB_TYPE == QHULL_REENTRANT
+    qhT qh_qh;
+	qhT* qh = &qh_qh;
+	qh_init_A(qh, stdin, stdout, stderr, 0, NULL);
+    if ((exitcode = setjmp(qh->errexit)))
+#else
+	qh_init_A(stdin, stdout, stderr, 0, NULL);
     if ((exitcode = setjmp(qh errexit))) 
+#endif
 	{
 		exit(exitcode);
 	}
+#if defined(QHULL_LIB_TYPE) && QHULL_LIB_TYPE == QHULL_REENTRANT
+    qh->NOerrexit = False;
+    qh_initflags(qh, options);
+    qh_init_B(qh, array[0], array.size(), 3, False);
+    qh_qhull(qh);
+    qh_check_output(qh);
+#else
     qh_initflags(options);
     qh_init_B(array[0], array.size(), 3, False);
     qh_qhull();
     qh_check_output();
+#endif
     
     T_IndexBuf *indexBuf = new T_IndexBuf[count];
     FORALLfacets 
 	{
+#if defined(QHULL_LIB_TYPE) && QHULL_LIB_TYPE == QHULL_REENTRANT
+		setT *vertices = qh_facet3vertex(qh, facet);
+#else
 		setT *vertices = qh_facet3vertex(facet);
+#endif
 		
 		T_IndexBuf  facetIndices;
 
 		FOREACHvertex_(vertices) 
 		{
+#if defined(QHULL_LIB_TYPE) && QHULL_LIB_TYPE == QHULL_REENTRANT
+			facetIndices.push_back(index[qh_pointid(qh, vertex->point)]);
+#else
 			facetIndices.push_back(index[qh_pointid(vertex->point)]);
+#endif
 		}
 		int i, j;
 		for (i = 0, j = facetIndices.size()-1; i < (int)facetIndices.size(); j = i++)
@@ -89,9 +120,15 @@ T_IndexBuf *adjacency_graph(DT_Count count, const MT_Point3 *verts, const char *
     }
 
     
+#if defined(QHULL_LIB_TYPE) && QHULL_LIB_TYPE == QHULL_REENTRANT
+    qh->NOerrexit = True;
+    qh_freeqhull(qh, !qh_ALL);
+    qh_memfreeshort(qh, &curlong, &totlong);
+#else
     qh NOerrexit = True;
     qh_freeqhull(!qh_ALL);
     qh_memfreeshort(&curlong, &totlong);
+#endif
 
 	return indexBuf;
 }

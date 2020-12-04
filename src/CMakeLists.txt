@@ -1,12 +1,16 @@
-add_subdirectory(qhull)
+include(CheckIncludeFile)
+include(CMakePushCheckState)
 
-if(DYNAMIC_SOLID)
-  set(LIBRARY_TYPE "SHARED")
+if(NOT USE_EXTERNAL_QHULL)
+  add_subdirectory(qhull)
+  set(QHULL_TARGET_OBJECTS $<TARGET_OBJECTS:qhull>)
+endif()
+
+if(BUILD_SHARED_LIBS)
   add_definitions(-DSOLID_DLL_EXPORT)
-else(DYNAMIC_SOLID)
-  set(LIBRARY_TYPE "STATIC")
+else()
   add_definitions(-DSOLID_STATIC)
-endif(DYNAMIC_SOLID)
+endif()
 
 include_directories(${PROJECT_SOURCE_DIR}/src)
 include_directories(${PROJECT_SOURCE_DIR}/src/broad)
@@ -19,7 +23,7 @@ set(SOLID_PUBLIC_HEADERS
   ${PROJECT_SOURCE_DIR}/include/SOLID_types.h
 )
 
-add_library(solid3 ${LIBRARY_TYPE}
+add_library(solid3
   ${SOLID_PUBLIC_HEADERS}
   broad/BP_C-api.cpp
   broad/BP_Endpoint.h
@@ -80,11 +84,33 @@ add_library(solid3 ${LIBRARY_TYPE}
   DT_RespTable.h
   DT_Scene.cpp
   DT_Scene.h
-  $<TARGET_OBJECTS:qhull>
+  ${QHULL_TARGET_OBJECTS}
 )
 
 target_include_directories(solid3 INTERFACE $<INSTALL_INTERFACE:$<INSTALL_PREFIX>/${CMAKE_INSTALL_INCLUDEDIR}>)
 set_target_properties(solid3 PROPERTIES VERSION ${VERSION})
+
+if(USE_EXTERNAL_QHULL)
+  cmake_push_check_state(RESET)
+  set(CMAKE_REQUIRED_INCLUDES ${Qhull_INCLUDE_DIRS})
+  check_include_file(libqhull_r/qhull_ra.h HAVE_LIBQHULL_R_QHULL_RA_H)
+  if(HAVE_LIBQHULL_R_QHULL_RA_H)
+    add_definitions(-DHAVE_LIBQHULL_R_QHULL_RA_H)
+  else()
+    check_include_file(qhull_r/qhull_ra.h HAVE_QHULL_R_QHULL_RA_H)
+    if(HAVE_QHULL_R_QHULL_RA_H)
+      add_definitions(-DHAVE_QHULL_R_QHULL_RA_H)
+    else()
+      check_include_file(libqhull/qhull_a.h HAVE_LIBQHULL_QHULL_A_H)
+      if(HAVE_LIBQHULL_QHULL_A_H)
+        add_definitions(-DHAVE_LIBQHULL_QHULL_A_H)
+      endif()
+    endif()
+  endif()
+  cmake_pop_check_state()
+  target_include_directories(solid3 PRIVATE ${Qhull_INCLUDE_DIRS})
+  target_link_libraries(solid3 PRIVATE ${Qhull_LIBRARIES})
+endif()
 
 if(NOT CMAKE_VERSION VERSION_LESS 3.12)
     install(
@@ -102,7 +128,7 @@ else()
         LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT runtime NAMELINK_SKIP
         RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR} COMPONENT runtime
     )
-    if(DYNAMIC_SOLID)
+    if(BUILD_SHARED_LIBS)
         install(
             TARGETS solid3
             EXPORT solid3
@@ -116,6 +142,6 @@ install(
     COMPONENT development
 )
 
-if(MSVC AND DYNAMIC_SOLID AND ${CMAKE_MAJOR_VERSION} GREATER 2 AND ${CMAKE_MINOR_VERSION} GREATER 0)
+if(MSVC AND BUILD_SHARED_LIBS AND ${CMAKE_MAJOR_VERSION} GREATER 2 AND ${CMAKE_MINOR_VERSION} GREATER 0)
     install(FILES $<TARGET_PDB_FILE:solid3> DESTINATION ${CMAKE_INSTALL_BINDIR} CONFIGURATIONS Debug RelWithDebInfo COMPONENT debug)
 endif()
