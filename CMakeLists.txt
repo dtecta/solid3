@@ -80,8 +80,12 @@ if (WIN32)
 endif(WIN32)
 
 
-find_package(GLUT)
-find_package(OpenGL)
+option(BUILD_EXAMPLES "Build examples." ON)
+
+if(BUILD_EXAMPLES)
+  find_package(GLUT)
+  find_package(OpenGL)
+endif()
 
 
 if(MSVC) 
@@ -109,7 +113,9 @@ if(UNIX)
 endif(UNIX)
 
 add_subdirectory(src)
-add_subdirectory(examples)
+if(BUILD_EXAMPLES)
+  add_subdirectory(examples)
+endif()
 #add_subdirectory(doc)
 
 include(CMakePackageConfigHelpers)
