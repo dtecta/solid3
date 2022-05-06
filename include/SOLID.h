@@ -137,6 +137,9 @@ extern "C" {
 
 /* These commands assume a column-major 4x4 OpenGL matrix representation */
 
+	DECLSPEC void DT_SetMatrix(DT_ObjectHandle object, const DT_Scalar *m);
+	DECLSPEC void DT_GetMatrix(DT_ObjectHandle object, DT_Scalar *m);
+
 	DECLSPEC void DT_SetMatrixf(DT_ObjectHandle object, const float *m); 
 	DECLSPEC void DT_GetMatrixf(DT_ObjectHandle object, float *m); 
 

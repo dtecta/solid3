@@ -138,9 +138,9 @@ public:
 	{ 
 		glBegin(GL_TRIANGLES);
     
-		glVertex3fv(m_points[0]);
-		glVertex3fv(m_points[1]);
-		glVertex3fv(m_points[2]);
+		glVertex3f(m_points[0][0], m_points[0][1], m_points[0][2]);
+		glVertex3f(m_points[1][0], m_points[1][1], m_points[1][2]);
+		glVertex3f(m_points[2][0], m_points[2][1], m_points[2][2]);
 		
 	    glEnd();	
 	}
@@ -560,8 +560,8 @@ void display(void)
 #endif 
     {
         glBegin(GL_LINES);
-        glVertex3fv(cp1);
-        glVertex3fv(cp2);
+        glVertex3f(cp1[0], cp1[1], cp1[2]);
+        glVertex3f(cp2[0], cp2[1], cp2[2]);
 		glEnd();
 	}
 	
@@ -571,21 +571,21 @@ void display(void)
 	if (hit_client && param < 1.0f)
 	{
 		glBegin(GL_LINES);
-		glVertex3fv(source);
-		glVertex3fv(spot);
+		glVertex3f(source[0], source[1], source[2]);
+		glVertex3f(spot[0], spot[1], spot[2]);
 		glEnd();
 	
 		glColor3f(0.0f, 0.0f, 1.0f);
 		glBegin(GL_LINES);
-		glVertex3fv(spot);
-		glVertex3fv(target);
+		glVertex3f(spot[0], spot[1], spot[2]);
+		glVertex3f(target[0], target[1], target[2]);
 		glEnd();
 	}
 	else
 	{
 		glBegin(GL_LINES);
-		glVertex3fv(source);
-		glVertex3fv(target);
+		glVertex3f(source[0], source[1], source[2]);
+		glVertex3f(target[0], target[1], target[2]);
 		glEnd();
 	}
 
@@ -594,7 +594,7 @@ void display(void)
 		glPointSize(5);
 		glColor3f(1.0f, 1.0f, 1.0f);
         glBegin(GL_POINTS);
-        glVertex3fv(spot);
+        glVertex3f(spot[0], spot[1], spot[2]);
         glEnd();
         
 		glPointSize(1);
@@ -604,8 +604,9 @@ void display(void)
 		if (normal.length2() > 0.0f)
 		{
 			glBegin(GL_LINES);
-			glVertex3fv(spot);
-			glVertex3fv(spot + normal.normalized());
+			glVertex3f(spot[0], spot[1], spot[2]);
+			MT_Point3 tmp = spot + normal.normalized();
+			glVertex3f(tmp[0], tmp[1], tmp[2]);
 			glEnd();
 		}
     }
@@ -788,7 +789,7 @@ void separate()
 { 
 	if (separation.length2() != MT_Scalar(0.0))
 	{
-		pos2 += 0.01f * separation.normalized(); 
+		pos2 += MT_Scalar(0.01) * separation.normalized();
 	    doTest(); 
 	}
 }
@@ -797,7 +798,7 @@ void connect()
 { 
 	if (separation.length2() != MT_Scalar(0.0))
 	{
-		pos2 -= 0.01f * separation.normalized(); 
+		pos2 -= MT_Scalar(0.01) * separation.normalized();
 	    doTest(); 
 	} 
 }

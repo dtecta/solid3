@@ -40,9 +40,15 @@ option(USE_DOUBLES "Use double-precision floating-point numbers." OFF)
 
 if(USE_DOUBLES)
   add_definitions(-DUSE_DOUBLES)
+  set(DT_Scalar double)
+else()
+  set(DT_Scalar float)
 endif(USE_DOUBLES)
 
+configure_file(include/SOLID_precision.h.in include/SOLID_precision.h @ONLY)
+
 include_directories(
+	${PROJECT_BINARY_DIR}/include
 	${PROJECT_SOURCE_DIR}/include
 )
 

@@ -233,9 +233,9 @@ public:
  	void setTransform(const MT_Transform& xform)
 	{
 		RigidBody::setTransform(xform);	
-		float m[16];
+		DT_Scalar m[16];
 		xform.getValue(m);
-		DT_SetMatrixf(m_object, m);
+		DT_SetMatrix(m_object, m);
 		DT_SetScaling(m_object, m_scaling);
 	}
 	
@@ -249,9 +249,9 @@ public:
     void proceed(MT_Scalar step)
 	{
 		RigidBody::proceed(step);
-		float m[16];
+		DT_Scalar m[16];
 		m_xform.getValue(m);
-		DT_SetMatrixf(m_object, m);
+		DT_SetMatrix(m_object, m);
 		DT_SetScaling(m_object, m_scaling);
 	}
 	
@@ -269,7 +269,7 @@ public:
 #ifdef DRAW_COORD
 		coordSystem();
 #endif
-		glColor3fv(m_color);
+		glColor3f(m_color[0], m_color[1], m_color[2]);
 		m_gl_shape->paint();
 		glPopMatrix();
 	}
@@ -434,7 +434,7 @@ DT_Bool body2body_fix(void *client_data,
 	Object& obj2 = *(Object *)object2;
 	MT_Vector3 normal(coll_data->normal);	
    
-	MT_Vector3 error = normal * 0.5f;
+	MT_Vector3 error = normal * MT_Scalar(0.5);
 	obj1.correct(error);
 	obj2.correct(-error);
 	
@@ -498,7 +498,7 @@ void display(void)
 static MT_Scalar DISTANCE = 20; 
 
 static MT_Scalar ele = 0, azi = 0;
-static MT_Point3 eye(0.0f, 0.0f, DISTANCE);
+static MT_Point3 eye(MT_Scalar(0), MT_Scalar(0), DISTANCE);
 static MT_Point3 center(0, 0, 0);
 
 inline double irnd() { return 2 * MT_random() - 1; }  

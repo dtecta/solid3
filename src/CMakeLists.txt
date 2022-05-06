@@ -20,6 +20,7 @@ include_directories(${PROJECT_SOURCE_DIR}/src/complex)
 set(SOLID_PUBLIC_HEADERS 
   ${PROJECT_SOURCE_DIR}/include/SOLID.h
   ${PROJECT_SOURCE_DIR}/include/SOLID_broad.h
+  ${PROJECT_BINARY_DIR}/include/SOLID_precision.h
   ${PROJECT_SOURCE_DIR}/include/SOLID_types.h
 )
 
